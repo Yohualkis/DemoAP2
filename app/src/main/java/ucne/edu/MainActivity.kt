@@ -2,13 +2,20 @@
 
 package ucne.edu
 
+import android.content.Context
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,9 +24,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -48,9 +56,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -61,6 +72,9 @@ import kotlinx.coroutines.launch
 import ucne.edu.data.local.database.TecnicosDb
 import ucne.edu.data.local.entities.TecnicoEntity
 import ucne.edu.ui.theme.DemoAP2Theme
+import java.io.File
+import coil.compose.rememberAsyncImagePainter
+import java.io.FileOutputStream
 
 
 class MainActivity : ComponentActivity() {
@@ -81,7 +95,6 @@ class MainActivity : ComponentActivity() {
                 AppFrontEnd(
                     contexto = tecnicoDb
                 )
-
             }
         }
     }
@@ -326,8 +339,20 @@ fun FormularioTecnicos(
                     contextoDb?.TecnicoDao()?.delete(tecnico)
                 }
             },
+            contextoDb = contextoDb
         )
     }
+}
+
+fun copiarImagenDeExploradorDeArchivos(context: Context, uri: Uri): String {
+    val inputStream = context.contentResolver.openInputStream(uri)
+    val fileName = "foto_${System.currentTimeMillis()}.jpg"
+    val file = File(context.filesDir, fileName)
+    val outputStream = FileOutputStream(file)
+    inputStream?.copyTo(outputStream)
+    inputStream?.close()
+    outputStream.close()
+    return file.absolutePath
 }
 
 @Composable
@@ -335,6 +360,7 @@ fun DesplegarListadoDeTecnicos(
     listaTecnicos: List<TecnicoEntity>,
     onEditClick: (TecnicoEntity) -> Unit,
     onDeleteClick: (TecnicoEntity) -> Unit,
+    contextoDb: TecnicosDb,
     modifier: Modifier = Modifier,
 ) {
     Column {
@@ -366,6 +392,7 @@ fun DesplegarListadoDeTecnicos(
                             tecnico = tecnico,
                             onEditClick = { onEditClick(tecnico) },
                             onDeleteClick = { onDeleteClick(tecnico) },
+                            contextoDb = contextoDb
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                     }
@@ -380,15 +407,32 @@ fun TecnicoCardInfo(
     tecnico: TecnicoEntity,
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit,
+    contextoDb: TecnicosDb
 ) {
-    val focusManager = LocalFocusManager.current
+    val await = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        if (uri != null) {
+            await.launch {
+                val path = copiarImagenDeExploradorDeArchivos(context, uri)
+                val tecnicoActualizado = tecnico.copy(
+                    fotoPath = path
+                )
+                saveTecnico(contextoDb, tecnicoActualizado)
+                contextoDb.TecnicoDao().find(tecnico.tecnicoId)
+            }
+        }
+    }
+    val imageFile = tecnico.fotoPath?.let { File(it) }
+    val hasImage = imageFile != null && imageFile.exists()
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 2.dp),
         colors = CardDefaults.outlinedCardColors(containerColor = Color.White),
         border = CardDefaults.outlinedCardBorder()
-
     ) {
         Column {
             Row(
@@ -396,54 +440,67 @@ fun TecnicoCardInfo(
                     .padding(16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // Columna Izquierda: Icono + Info
-                Row {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = "Técnico",
-                        tint = Color.Gray,
-                        modifier = Modifier
-                            .padding(end = 12.dp)
-                            .size(40.dp)
-                    )
-
-                    Column {
-                        Text(
-                            text = tecnico.nombre,
-                            fontSize = 18.sp,
-                            color = Color.Black
+                // Imagen o icono seleccionable
+                Box(
+                    modifier = Modifier
+                        .size(52.dp) // 2dp más grande que icono (40dp + padding)
+                        .clickable { launcher.launch("image/*") },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (hasImage) {
+                        Image(
+                            painter = rememberAsyncImagePainter(imageFile),
+                            contentDescription = "Foto del técnico",
+                            modifier = Modifier
+                                .size(52.dp)
+                                .clip(CircleShape)
+                                .border(2.dp, Color.Gray, CircleShape),
+                            contentScale = ContentScale.Crop
                         )
-                        Text(
-                            text = "RD$${"%.2f".format(tecnico.sueldoHora)}",
-                            fontSize = 14.sp,
-                            color = Color.DarkGray
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Seleccionar foto",
+                            tint = Color.Gray,
+                            modifier = Modifier
+                                .size(40.dp)
                         )
                     }
                 }
 
-                // Columna Derecha: Botones
+                Spacer(modifier = Modifier.width(12.dp))
+
+                // Info
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentWidth(Alignment.End)
-                ){
-                    Row {
-                        IconButton(onClick = {
-                            onEditClick()
-                        }) {
-                            Icon(
-                                imageVector = Icons.Default.Edit,
-                                contentDescription = "Editar",
-                                tint = Color.DarkGray
-                            )
-                        }
-                        IconButton(onClick = { onDeleteClick() }) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = "Eliminar",
-                                tint = Color.Red
-                            )
-                        }
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = tecnico.nombre,
+                        fontSize = 18.sp,
+                        color = Color.Black
+                    )
+                    Text(
+                        text = "RD$${"%.2f".format(tecnico.sueldoHora)}",
+                        fontSize = 14.sp,
+                        color = Color.DarkGray
+                    )
+                }
+
+                // Botones de acción
+                Row {
+                    IconButton(onClick = { onEditClick() }) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Editar",
+                            tint = Color.DarkGray
+                        )
+                    }
+                    IconButton(onClick = { onDeleteClick() }) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Eliminar",
+                            tint = Color.Red
+                        )
                     }
                 }
             }
