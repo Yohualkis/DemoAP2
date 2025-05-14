@@ -8,5 +8,6 @@ data class TecnicoEntity(
     @PrimaryKey
     val tecnicoId: Int?,
     val nombre: String,
-    val sueldoHora: Double
+    val sueldoHora: Double,
+    var fotoPath: String? = null
 )

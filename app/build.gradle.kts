@@ -44,6 +44,9 @@ android {
 }
 
 dependencies {
+    //Coil - para el tema de las imagenes
+    implementation("io.coil-kt:coil-compose:2.4.0")
+
     //navigation
     implementation(libs.androidx.navigation.compose)
     implementation(libs.kotlinx.serialization.json)
