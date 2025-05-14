@@ -7,7 +7,7 @@ import ucne.edu.data.local.entities.TecnicoEntity
 
 @Database(
     entities = [TecnicoEntity::class],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class TecnicosDb : RoomDatabase(){
