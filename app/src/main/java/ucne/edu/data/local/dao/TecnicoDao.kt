@@ -20,7 +20,7 @@ interface TecnicoDao {
             limit 1
         """
     )
-    suspend fun find(id: Int?): TecnicoEntity?
+    suspend fun find(id: Int): TecnicoEntity?
 
     @Delete
     suspend fun delete(Tecnico: TecnicoEntity)
