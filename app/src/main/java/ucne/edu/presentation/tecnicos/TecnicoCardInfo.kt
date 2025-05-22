@@ -44,18 +44,18 @@ fun TecnicoCardInfo(
     tecnico: TecnicoEntity,
     onEditClick: (Int?) -> Unit,
     onDeleteClick: () -> Unit,
-    tecnicoViewModel: TecnicosViewModel?,
+    viewModel: TecnicosViewModel?,
 ) {
     val context = LocalContext.current
 
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
             if (uri != null) {
-                val path = tecnicoViewModel?.copiarImagenDeExploradorDeArchivos(context, uri)
+                val path = viewModel?.copiarImagenDeExploradorDeArchivos(context, uri)
                 val tecnicoActualizado = tecnico.copy(
                     fotoPath = path
                 )
-                tecnicoViewModel?.saveTecnico(tecnicoActualizado)
+                viewModel?.saveTecnico(tecnicoActualizado)
             }
         }
     val imageFile = tecnico.fotoPath?.let { File(it) }
@@ -106,7 +106,9 @@ fun TecnicoCardInfo(
 
                 // Info
                 Column(
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.Start
                 ) {
                     Text(
                         text = tecnico.nombre,
@@ -114,11 +116,13 @@ fun TecnicoCardInfo(
                         color = Color.Black
                     )
                     Text(
-                        text = "RD$${"%.2f".format(tecnico.sueldoHora)}",
-                        fontSize = 14.sp,
+                        text = "RD$${"%.2f".format(tecnico.sueldoHora)}   |   ID: ${tecnico.tecnicoId}",
+                        fontSize = 14 .sp,
                         color = Color.DarkGray
                     )
                 }
+
+
 
                 // Botones de acción
                 Row {
@@ -126,7 +130,7 @@ fun TecnicoCardInfo(
                         Icon(
                             imageVector = Icons.Default.Edit,
                             contentDescription = "Editar",
-                            tint = Color.DarkGray
+                            tint = Color.Gray
                         )
                     }
                     IconButton(onClick = { onDeleteClick() }) {
@@ -149,6 +153,6 @@ fun TecnicoCardInfoPreview() {
         tecnico = TecnicoEntity(1, "Prueba", 2.0),
         onEditClick = {},
         onDeleteClick = {},
-        tecnicoViewModel = null
+        viewModel = null
     )
 }
