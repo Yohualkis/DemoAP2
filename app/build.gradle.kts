@@ -47,6 +47,9 @@ dependencies {
     //Coil - para el tema de las imagenes
     implementation("io.coil-kt:coil-compose:2.4.0")
 
+    // Iconos
+    implementation("androidx.compose.material:material-icons-extended:1.6.0")
+
     //navigation
     implementation(libs.androidx.navigation.compose)
     implementation(libs.kotlinx.serialization.json)
@@ -57,7 +60,6 @@ dependencies {
     implementation(libs.androidx.activity.ktx)
     annotationProcessor("androidx.room:room-compiler:2.6.1")
     ksp("androidx.room:room-compiler:2.6.1")
-
 
     implementation("androidx.compose.foundation:foundation:1.5.0")
 
