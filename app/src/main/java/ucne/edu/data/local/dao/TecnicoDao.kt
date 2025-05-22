@@ -10,7 +10,7 @@ import ucne.edu.data.local.entities.TecnicoEntity
 @Dao
 interface TecnicoDao {
     @Upsert
-    suspend fun save(Tecnico: TecnicoEntity)
+    suspend fun save(tecnico: TecnicoEntity)
 
     @Query(
         """
@@ -23,7 +23,7 @@ interface TecnicoDao {
     suspend fun find(id: Int): TecnicoEntity?
 
     @Delete
-    suspend fun delete(Tecnico: TecnicoEntity)
+    suspend fun delete(tecnico: TecnicoEntity)
 
     @Query("select * from Tecnicos")
     fun getAll(): Flow<List<TecnicoEntity>>
