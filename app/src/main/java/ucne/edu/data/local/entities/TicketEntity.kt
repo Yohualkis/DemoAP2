@@ -32,7 +32,7 @@ data class TicketEntity(
     val ticketId: Int?,
     val prioridadId: Int?,
     val tecnicoId: Int?,
-    val fecha: Date = Date(),
+    val fecha: Date?,
     val cliente: String,
     val asunto: String,
     val descripcion: String,

@@ -12,19 +12,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 
 @Composable
 fun TopBarGenerica(
-    navController: NavController,
+    goBack: () -> Unit,
     titulo: String,
 ){
     Row (
         verticalAlignment = Alignment.CenterVertically
     ){
         IconButton(
-            onClick = { navController.popBackStack() },
+            onClick = { goBack() },
             modifier = Modifier
         ) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "volver")
@@ -40,6 +38,5 @@ fun TopBarGenerica(
 @Preview(showBackground = true)
 @Composable
 fun Preview(){
-    val nav = rememberNavController()
-    TopBarGenerica(nav, "Titulo")
+    TopBarGenerica({}, "Titulo")
 }

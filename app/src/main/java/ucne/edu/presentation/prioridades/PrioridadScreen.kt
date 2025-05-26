@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Article
+import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Button
@@ -27,9 +27,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -40,42 +38,51 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
-import ucne.edu.data.local.entities.PrioridadEntity
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import ucne.edu.presentation.UiEvent
 import ucne.edu.presentation.componentes.MensajeDeErrorGenerico
 import ucne.edu.presentation.componentes.TopBarGenerica
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PrioridadesFormulario(
-    prioridadId: Int? = null,
-    viewModel: PrioridadesViewModel? = null,
-    navController: NavController,
-    modifier: Modifier = Modifier,
+fun PrioridadScreen(
+    viewModel: PrioridadesViewModel = hiltViewModel(),
+    prioridadId: Int?,
+    goBack: () -> Unit,
 ) {
-    val focusRequester = remember { FocusRequester() }
-    val focusManager = LocalFocusManager.current
-
-    var descripcion: String by remember { mutableStateOf("") }
-    var editandoPrioridad by remember { mutableStateOf<PrioridadEntity?>(null) }
-    var errorMessage by remember { mutableStateOf("") }
-
     LaunchedEffect(prioridadId) {
-        if (prioridadId != null && prioridadId > 0) {
-            val prioridad = viewModel?.findPrioridad(prioridadId)
-            prioridad.let { prioridad ->
-                editandoPrioridad = prioridad
-                descripcion = prioridad?.descripcion.toString()
+        prioridadId?.let {
+            viewModel.selectedPrioridad(prioridadId)
+        }
+        viewModel.uiEvent.collect { event ->
+            when (event) {
+                UiEvent.NavigateUp -> goBack()
             }
         }
     }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    PrioridadFormulario(
+        uiState = uiState,
+        evento = viewModel::onEvent,
+        goBack = goBack
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PrioridadFormulario(
+    uiState: PrioridadUiState,
+    evento: (PrioridadEvent) -> Unit,
+    goBack: () -> Unit,
+) {
+    val focusRequester = remember { FocusRequester() }
+    val focusManager = LocalFocusManager.current
 
     Scaffold(
         topBar = {
             TopBarGenerica(
                 titulo = "Atrás",
-                navController = navController
+                goBack = goBack
             )
         },
     ) { innerPadding ->
@@ -93,9 +100,9 @@ fun PrioridadesFormulario(
                 },
         ) {
             Text(
-                text = if (prioridadId != null && prioridadId != 0) "Editar prioridad" else "Registrar prioridad",
+                text = if (uiState.prioridadId != null && uiState.prioridadId != 0) "Editar prioridad" else "Registrar prioridad",
                 fontSize = 24.sp,
-                modifier = modifier.align(Alignment.CenterHorizontally),
+                modifier = Modifier.align(Alignment.CenterHorizontally),
                 fontWeight = FontWeight.Bold,
             )
 
@@ -103,8 +110,11 @@ fun PrioridadesFormulario(
 
             // CAMPO DESCRIPCION
             OutlinedTextField(
-                value = descripcion,
-                onValueChange = { descripcion = it },
+                value = uiState.descripcion ?: "",
+                onValueChange = {
+                    evento(PrioridadEvent.LimpiarError)
+                    evento(PrioridadEvent.DescripcionChange(it))
+                },
                 label = { Text("Descripción") },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -112,16 +122,16 @@ fun PrioridadesFormulario(
                 colors = TextFieldDefaults.outlinedTextFieldColors(
                     unfocusedBorderColor = Color.LightGray,
                 ),
-                isError = descripcion.isBlank() && errorMessage != "",
+                isError = uiState.descripcion.isNullOrBlank() && !uiState.errorMessage.isNullOrBlank(),
                 leadingIcon = {
                     Icon(
-                        imageVector = Icons.Default.Article,
+                        imageVector = Icons.AutoMirrored.Filled.Article,
                         contentDescription = "Sueldo por hora"
                     )
                 }
             )
 
-            MensajeDeErrorGenerico(errorMessage)
+            MensajeDeErrorGenerico(uiState.errorMessage)
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -133,9 +143,7 @@ fun PrioridadesFormulario(
                 Column {
                     Button(
                         onClick = {
-                            descripcion = ""
-                            errorMessage = ""
-                            editandoPrioridad = null
+                            evento(PrioridadEvent.Limpiar)
                             focusManager.clearFocus()
                         },
                         modifier = Modifier.padding(4.dp),
@@ -161,28 +169,7 @@ fun PrioridadesFormulario(
                 Column {
                     Button(
                         onClick = {
-                            errorMessage = ""
-                            if (descripcion.isBlank()) {
-                                errorMessage = "Este campo es obligatorio *"
-                                return@Button
-                            }
-
-                            if (descripcion.length > 16) {
-                                errorMessage =
-                                    "La descripción no puede tener más de 16 caracteres *"
-                                return@Button
-                            }
-                            viewModel?.savePrioridad(
-                                PrioridadEntity(
-                                    prioridadId = editandoPrioridad?.prioridadId,
-                                    descripcion = descripcion,
-                                )
-                            )
-
-                            descripcion = ""
-                            errorMessage = ""
-                            editandoPrioridad = null
-                            navController.navigateUp()
+                            evento(PrioridadEvent.Save)
                             focusManager.clearFocus()
                         },
                         modifier = Modifier.padding(4.dp),
@@ -207,11 +194,10 @@ fun PrioridadesFormulario(
 
 @Preview(showBackground = true)
 @Composable
-fun Previeww() {
-    val navController = rememberNavController()
-    PrioridadesFormulario(
-        prioridadId = null,
-        viewModel = null,
-        navController = navController
+private fun PreviewPrioridadFormulario() {
+    PrioridadFormulario(
+        goBack = {},
+        uiState = PrioridadUiState(),
+        evento = {},
     )
 }

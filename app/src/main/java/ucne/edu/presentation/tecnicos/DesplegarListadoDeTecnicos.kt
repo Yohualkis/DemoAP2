@@ -13,28 +13,46 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ucne.edu.data.local.entities.TecnicoEntity
 import ucne.edu.presentation.componentes.TopBarGenerica
+import ucne.edu.presentation.tickets.TicketEvent
+
+@Composable
+fun DesplegarListadoDeTecnicos(
+    viewModel: TecnicosViewModel = hiltViewModel(),
+    goToTecnico: (Int?) -> Unit,
+    goBack: () -> Unit
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    ListadoTecnicos(
+        uiState = uiState,
+        goToTecnico = { goToTecnico(it) },
+        goBack = goBack,
+        evento = { viewModel::onEvent } ,
+        onDeleteClick = { viewModel.onEvent(TecnicoEvent.Delete(it)) },
+    )
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DesplegarListadoDeTecnicos(
-    listaTecnicos: List<TecnicoEntity>,
-    onEditClick: (Int?) -> Unit,
+fun ListadoTecnicos(
+    uiState: TecnicosUiState,
+    goToTecnico: (Int?) -> Unit,
     onDeleteClick: (TecnicoEntity) -> Unit,
-    tecnicoViewModel: TecnicosViewModel?,
-    navController: NavController,
+    goBack: () -> Unit,
+    evento: (TicketEvent) -> Unit
 ) {
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    onEditClick(0)
+                    goToTecnico(0)
                 }
             ) {
                 Icon(Icons.Filled.Add, "Agregar")
@@ -42,23 +60,24 @@ fun DesplegarListadoDeTecnicos(
         },
         topBar = {
             TopBarGenerica(
-                navController = navController,
+                goBack = goBack,
                 titulo = "Listado de Técnicos"
             )
         }
     ) { innerPadding ->
+
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(8.dp)
                 .padding(innerPadding)
         ) {
-            items(listaTecnicos) { tecnico ->
+            items(uiState.listaTecnicos) { tecnico ->
                 TecnicoCardInfo(
                     tecnico = tecnico,
-                    onEditClick = { onEditClick(tecnico.tecnicoId) },
+                    onEditClick = { goToTecnico(tecnico.tecnicoId) },
                     onDeleteClick = { onDeleteClick(tecnico) },
-                    viewModel = tecnicoViewModel
+                    evento =  { evento }
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }
@@ -69,29 +88,24 @@ fun DesplegarListadoDeTecnicos(
 @Preview(showBackground = true)
 @Composable
 fun Preview() {
-    val listaTecnicos = listOf(
-        TecnicoEntity(
-            tecnicoId = 1,
-            nombre = "Juan",
-            sueldoHora = 100.0,
+    ListadoTecnicos(
+        uiState = TecnicosUiState(
+            listaTecnicos = listOf(
+                TecnicoEntity(
+                    tecnicoId = 1,
+                    nombre = "Juan",
+                    sueldoHora = 100.0,
+                ),
+                TecnicoEntity(
+                    tecnicoId = 2,
+                    nombre = "Jose",
+                    sueldoHora = 200.0
+                ),
+            )
         ),
-        TecnicoEntity(
-            tecnicoId = 2,
-            nombre = "Jose",
-            sueldoHora = 200.0
-        ),
-        TecnicoEntity(
-            tecnicoId = 2,
-            nombre = "Jose",
-            sueldoHora = 200.0
-        )
-    )
-    val nav: NavController = rememberNavController()
-    DesplegarListadoDeTecnicos(
-        listaTecnicos = listaTecnicos,
-        onEditClick = {},
         onDeleteClick = {},
-        tecnicoViewModel = null,
-        navController = nav
+        evento = {},
+        goToTecnico = {},
+        goBack = {},
     )
 }

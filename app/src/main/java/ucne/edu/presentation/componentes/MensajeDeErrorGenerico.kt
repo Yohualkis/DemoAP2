@@ -14,7 +14,7 @@ fun MensajeDeErrorGenerico(
 ) {
     AnimatedVisibility(visible = errorMessage != null) {
         Text(
-            text = errorMessage.toString(),
+            text = errorMessage ?: "",
             color = MaterialTheme.colorScheme.error,
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.padding(top = 4.dp)

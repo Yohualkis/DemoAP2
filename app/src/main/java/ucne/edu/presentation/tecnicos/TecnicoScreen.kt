@@ -30,9 +30,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -44,44 +42,51 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
-import ucne.edu.data.local.entities.TecnicoEntity
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import ucne.edu.presentation.UiEvent
 import ucne.edu.presentation.componentes.MensajeDeErrorGenerico
 import ucne.edu.presentation.componentes.TopBarGenerica
+
+@Composable
+fun TecnicoScreen(
+    viewModel: TecnicosViewModel = hiltViewModel(),
+    tecnicoId: Int?,
+    goBack: () -> Unit,
+) {
+    LaunchedEffect(tecnicoId) {
+        tecnicoId?.let {
+            viewModel.selectedTecnico(tecnicoId)
+        }
+        viewModel.uiEvent.collect { event ->
+            when (event) {
+                UiEvent.NavigateUp -> goBack()
+            }
+        }
+    }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    TecnicosFormulario(
+        uiState = uiState,
+        evento = viewModel::onEvent,
+        goBack = goBack
+    )
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TecnicosFormulario(
-    tecnicoId: Int? = null,
-    tecnicoViewModel: TecnicosViewModel? = null,
-    navController: NavController,
-    modifier: Modifier = Modifier,
+    uiState: TecnicosUiState,
+    evento: (TecnicoEvent) -> Unit,
+    goBack: () -> Unit,
 ) {
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
-
-    var nombre: String by remember { mutableStateOf("") }
-    var sueldo: Double by remember { mutableStateOf(0.0) }
-    var editandoTecnico by remember { mutableStateOf<TecnicoEntity?>(null) }
-    var errorMessage by remember { mutableStateOf("") }
-
-    LaunchedEffect(tecnicoId) {
-        if (tecnicoId != null && tecnicoId > 0) {
-            val tecnico = tecnicoViewModel?.find(tecnicoId)
-            tecnico?.let {
-                editandoTecnico = it
-                nombre = it.nombre
-                sueldo = it.sueldoHora
-            }
-        }
-    }
 
     Scaffold(
         topBar = {
             TopBarGenerica(
                 titulo = "Atrás",
-                navController = navController
+                goBack = goBack
             )
         },
     ) { innerPadding ->
@@ -100,9 +105,9 @@ fun TecnicosFormulario(
                 },
         ) {
             Text(
-                text = if (tecnicoId != null && tecnicoId != 0) "Editar técnico" else "Registrar técnico",
+                text = if (uiState.tecnicoId != null && uiState.tecnicoId != 0) "Editar técnico" else "Registrar técnico",
                 fontSize = 24.sp,
-                modifier = modifier.align(Alignment.CenterHorizontally),
+                modifier = Modifier.align(Alignment.CenterHorizontally),
                 fontWeight = FontWeight.Bold,
             )
 
@@ -110,8 +115,11 @@ fun TecnicosFormulario(
 
             // CAMPO NOMBRE
             OutlinedTextField(
-                value = nombre,
-                onValueChange = { nombre = it },
+                value = uiState.nombre ?: "",
+                onValueChange = {
+                    evento(TecnicoEvent.LimpiarError)
+                    evento(TecnicoEvent.NombreChange(it))
+                },
                 label = { Text("Nombre del Técnico") },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -120,7 +128,7 @@ fun TecnicosFormulario(
                     unfocusedBorderColor = Color.LightGray,
                 ),
                 singleLine = true,
-                isError = nombre.isBlank() && errorMessage != "",
+                isError = uiState.nombre.isNullOrBlank() && !uiState.errorMessage.isNullOrBlank(),
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Person,
@@ -128,13 +136,17 @@ fun TecnicosFormulario(
                     )
                 }
             )
-            MensajeDeErrorGenerico(errorMessage)
+            MensajeDeErrorGenerico(uiState.errorMessage)
 
             // CAMPO SUELDO HORA
             OutlinedTextField(
-                value = if (sueldo == 0.0 && editandoTecnico == null) "" else sueldo.toString(),
+                value = uiState.sueldoHora?.takeIf { it > 0.0 }?.toString() ?: "",
                 onValueChange = {
-                    sueldo = it.toDoubleOrNull() ?: 0.0
+                    evento(TecnicoEvent.LimpiarError)
+                    val sueldo = it.toDoubleOrNull()
+                    if (sueldo != null) {
+                        evento(TecnicoEvent.SueldoChange(sueldo))
+                    }
                 },
                 label = { Text("Sueldo por hora") },
                 modifier = Modifier.fillMaxWidth(),
@@ -143,7 +155,8 @@ fun TecnicosFormulario(
                 ),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                isError = sueldo <= 0.0 && errorMessage != "",
+                isError = (uiState.sueldoHora
+                    ?: 0.0) <= 0.0 && !uiState.errorMessage.isNullOrBlank(),
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.AttachMoney,
@@ -152,7 +165,7 @@ fun TecnicosFormulario(
                 }
             )
 
-            MensajeDeErrorGenerico(errorMessage)
+            MensajeDeErrorGenerico(uiState.errorMessage)
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -164,10 +177,7 @@ fun TecnicosFormulario(
                 Column {
                     Button(
                         onClick = {
-                            nombre = ""
-                            sueldo = 0.0
-                            errorMessage = ""
-                            editandoTecnico = null
+                            evento(TecnicoEvent.Limpiar)
                             focusManager.clearFocus()
                         },
                         modifier = Modifier.padding(4.dp),
@@ -193,38 +203,7 @@ fun TecnicosFormulario(
                 Column {
                     Button(
                         onClick = {
-                            errorMessage = ""
-                            if (nombre.isBlank()) {
-                                errorMessage = "Este campo es obligatorio *"
-                                return@Button
-                            }
-
-                            if (nombre.length > 12) {
-                                errorMessage =
-                                    "El nombre no puede tener más de 12 caracteres *"
-                                return@Button
-                            }
-
-                            if (sueldo <= 0) {
-                                errorMessage =
-                                    "Este campo no puede ser menor o igual a 0 *"
-                                return@Button
-                            }
-
-                            tecnicoViewModel?.saveTecnico(
-                                TecnicoEntity(
-                                    tecnicoId = editandoTecnico?.tecnicoId,
-                                    nombre = nombre,
-                                    sueldoHora = sueldo,
-                                    fotoPath = editandoTecnico?.fotoPath
-                                )
-                            )
-
-                            nombre = ""
-                            sueldo = 0.0
-                            errorMessage = ""
-                            editandoTecnico = null
-                            navController.navigateUp()
+                            evento(TecnicoEvent.Save)
                             focusManager.clearFocus()
                         },
                         modifier = Modifier.padding(4.dp),
@@ -250,10 +229,13 @@ fun TecnicosFormulario(
 @Preview(showBackground = true)
 @Composable
 fun PreviewTecnicosFormulario() {
-    val navController = rememberNavController()
     TecnicosFormulario(
-        tecnicoId = null,
-        tecnicoViewModel = null,
-        navController = navController
+        uiState = TecnicosUiState(
+            tecnicoId = 1,
+            nombre = "Tecnico",
+            sueldoHora = 100.0,
+        ),
+        evento = {},
+        goBack = {}
     )
 }

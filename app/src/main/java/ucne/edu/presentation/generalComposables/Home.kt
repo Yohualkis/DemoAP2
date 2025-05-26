@@ -18,6 +18,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -25,18 +26,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import ucne.edu.data.local.entities.PrioridadEntity
-import ucne.edu.data.local.entities.TecnicoEntity
-import ucne.edu.data.local.entities.TicketEntity
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ucne.edu.presentation.componentes.TopBarHome
 import ucne.edu.presentation.componentes.TotalEntidadesCard
+import ucne.edu.presentation.tickets.TicketsViewModel
 
 @Composable
 fun Home(
-    listaTecnicos: List<TecnicoEntity>,
-    listaTickets: List<TicketEntity>,
-    listaPrioridades: List<PrioridadEntity>,
+    viewModel: TicketsViewModel = hiltViewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     Scaffold(
         topBar = { TopBarHome() }
     ) { innerPadding ->
@@ -77,17 +77,17 @@ fun Home(
             TotalEntidadesCard(
                 titulo = "Técnicos:",
                 icono = Icons.Filled.Build,
-                listaEntidades = listaTecnicos
+                listaEntidades = uiState.listaTecnicos
             )
             TotalEntidadesCard(
                 titulo = "Prioridades:",
                 icono = Icons.Filled.PriorityHigh,
-                listaEntidades = listaPrioridades
+                listaEntidades = uiState.listaPrioridades
             )
             TotalEntidadesCard(
                 titulo = "Tickets:",
                 icono = Icons.Filled.ConfirmationNumber,
-                listaEntidades = listaTickets
+                listaEntidades = uiState.listaTickets
             )
         }
     }
@@ -96,12 +96,5 @@ fun Home(
 @Preview(showBackground = true)
 @Composable
 fun PreviewHome() {
-    var listaTecnicos: List<TecnicoEntity> = emptyList()
-    var listaTickets: List<TicketEntity> = emptyList()
-    var listaPrioridades: List<PrioridadEntity> = emptyList()
-    Home(
-        listaTecnicos = listaTecnicos,
-        listaTickets = listaTickets,
-        listaPrioridades = listaPrioridades
-    )
+    Home()
 }
