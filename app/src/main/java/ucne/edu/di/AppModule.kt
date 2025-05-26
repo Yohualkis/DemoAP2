@@ -31,4 +31,7 @@ object AppModule{
 
     @Provides
     fun providePrioridadDao(demoap2Db: TecnicosDb) = demoap2Db.PrioridadDao()
+
+    @Provides
+    fun provideMensajeDao(demoap2Db: TecnicosDb) = demoap2Db.MensajeDao()
 }
