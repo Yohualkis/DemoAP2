@@ -44,23 +44,25 @@ fun TecnicoCardInfo(
     tecnico: TecnicoEntity,
     onEditClick: (Int?) -> Unit,
     onDeleteClick: () -> Unit,
-    viewModel: TecnicosViewModel?,
+    evento: (TecnicoEvent) -> Unit,
 ) {
     val context = LocalContext.current
+    val imageFile = tecnico.fotoPath?.let { File(it) }
 
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
             if (uri != null) {
-                val path = viewModel?.copiarImagenDeExploradorDeArchivos(context, uri)
-                val tecnicoActualizado = tecnico.copy(
-                    fotoPath = path
+                evento(
+                    TecnicoEvent.FotoChange(
+                        context = context,
+                        uri = uri,
+                        onResultado ={ (imageFile) },
+                    )
                 )
-                viewModel?.saveTecnico(tecnicoActualizado)
             }
         }
-    val imageFile = tecnico.fotoPath?.let { File(it) }
     val hasImage = imageFile != null && imageFile.exists()
-
+    
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -77,7 +79,7 @@ fun TecnicoCardInfo(
                 // Imagen o icono seleccionable
                 Box(
                     modifier = Modifier
-                        .size(52.dp) // 2dp más grande que icono (40dp + padding)
+                        .size(52.dp) // 2dp mas grande que icono (40dp + padding)
                         .clickable { launcher.launch("image/*") },
                     contentAlignment = Alignment.Center
                 ) {
@@ -122,8 +124,6 @@ fun TecnicoCardInfo(
                     )
                 }
 
-
-
                 // Botones de acción
                 Row {
                     IconButton(onClick = { onEditClick(tecnico.tecnicoId) }) {
@@ -150,9 +150,13 @@ fun TecnicoCardInfo(
 @Composable
 fun TecnicoCardInfoPreview() {
     TecnicoCardInfo(
-        tecnico = TecnicoEntity(1, "Prueba", 2.0),
+        tecnico = TecnicoEntity(
+            tecnicoId = 1,
+            nombre = "Tecnico",
+            sueldoHora = 500.0,
+        ),
         onEditClick = {},
         onDeleteClick = {},
-        viewModel = null
+        evento = {}
     )
 }
