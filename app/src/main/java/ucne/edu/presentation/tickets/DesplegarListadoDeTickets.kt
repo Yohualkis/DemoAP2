@@ -12,11 +12,12 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ucne.edu.data.local.entities.PrioridadEntity
 import ucne.edu.data.local.entities.TecnicoEntity
 import ucne.edu.data.local.entities.TicketEntity
@@ -25,18 +26,34 @@ import java.util.Date
 
 @Composable
 fun DesplegarListadoDeTickets(
-    listaTickets: List<TicketEntity>,
-    listaTecnicos: List<TecnicoEntity>,
-    listaPrioridades: List<PrioridadEntity>,
-    onEditClick: (Int?) -> Unit,
+    viewModel: TicketsViewModel = hiltViewModel(),
+    goToTicket: (Int?) -> Unit,
+    goBack: () -> Unit,
+    onComentariosClick: (Int?, String) -> Unit
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    ListadoTickets(
+        uiState = uiState,
+        goToTicket = { goToTicket(it) },
+        onDeleteClick = { viewModel.onEvent(TicketEvent.Delete(it)) },
+        goBack = goBack,
+        onComentariosClick = onComentariosClick
+    )
+}
+
+@Composable
+fun ListadoTickets(
+    uiState: TicketUiState,
+    goToTicket: (Int?) -> Unit,
     onDeleteClick: (TicketEntity) -> Unit,
-    navController: NavController,
+    goBack: () -> Unit,
+    onComentariosClick: (Int?, String) -> Unit
 ) {
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    onEditClick(0)
+                    goToTicket(0)
                 }
             ) {
                 Icon(Icons.Filled.Add, "Agregar")
@@ -44,7 +61,7 @@ fun DesplegarListadoDeTickets(
         },
         topBar = {
             TopBarGenerica(
-                navController = navController,
+                goBack = goBack,
                 titulo = "Listado de Tickets"
             )
         }
@@ -55,27 +72,22 @@ fun DesplegarListadoDeTickets(
                 .padding(innerPadding)
         ) {
 
-            items(listaTickets, key = { it.ticketId!! } ) { ticket ->
-                val nombreTecnico = listaTecnicos.find {
+            items(uiState.listaTickets) { ticket ->
+                var nombreTecnico = uiState.listaTecnicos.find {
                     it.tecnicoId == ticket.tecnicoId
                 }?.nombre ?: "N/D"
-                val descripcionPrioridad = listaPrioridades.find {
+
+                var descripcionPrioridad = uiState.listaPrioridades.find {
                     it.prioridadId == ticket.prioridadId
                 }?.descripcion ?: "N/D"
+
                 TicketCardInfo(
-                    ticketId = ticket.ticketId,
-                    nombreCliente = ticket.cliente,
-                    fecha = ticket.fecha,
-                    asunto = ticket.asunto,
-                    descripcion = ticket.descripcion,
+                    ticket = ticket,
                     nombreTecnico = nombreTecnico,
                     descripcionPrioridad = descripcionPrioridad,
-                    onEditClick = {
-                        onEditClick(ticket.ticketId)
-                    },
-                    onDeleteClick = {
-                        onDeleteClick(ticket)
-                    }
+                    onEditClick = { goToTicket(ticket.ticketId) },
+                    onDeleteClick = { onDeleteClick(ticket) },
+                    onComentariosClick = onComentariosClick
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }
@@ -85,36 +97,39 @@ fun DesplegarListadoDeTickets(
 
 @Preview(showBackground = true)
 @Composable
-fun Previewww(){
-    val listaTickets: List<TicketEntity> = listOf(
-        TicketEntity(
-            ticketId = 1,
-            prioridadId = 1,
-            tecnicoId = 1,
-            fecha = Date(),
-            cliente = "Yohualkis",
-            asunto = "Asunto",
-            descripcion = "Descripcion"
+fun PreviewListado() {
+    ListadoTickets(
+        uiState = TicketUiState(
+            listaTickets = listOf(
+                TicketEntity(
+                    ticketId = 1,
+                    cliente = "Juan",
+                    tecnicoId = 1,
+                    prioridadId = 1,
+                    asunto = "No enciende",
+                    descripcion = "La PC no enciende",
+                    fecha = Date()
+                ),
+                TicketEntity(
+                    ticketId = 3,
+                    cliente = "Pedro",
+                    tecnicoId = 1,
+                    prioridadId = 1,
+                    asunto = "Impresora dañada",
+                    descripcion = "La impresora no imprime a color",
+                    fecha = Date()
+                )
+            ),
+            listaTecnicos = listOf(
+                TecnicoEntity(tecnicoId = 1, nombre = "Pedro", sueldoHora = 2.0)
+            ),
+            listaPrioridades = listOf(
+                PrioridadEntity(prioridadId = 1, descripcion = "Alta")
+            )
         ),
-        TicketEntity(
-            ticketId = 2,
-            prioridadId = 2,
-            tecnicoId = 2,
-            fecha = Date(),
-            cliente = "Jerony",
-            asunto = "Asunto",
-            descripcion = "Descripcion"
-        )
-
-    )
-    val listaTecnicos: List<TecnicoEntity> = emptyList()
-    val listaPrioridades: List<PrioridadEntity> = emptyList()
-    DesplegarListadoDeTickets(
-        listaTickets = listaTickets,
-        listaTecnicos = listaTecnicos,
-        listaPrioridades = listaPrioridades,
-        navController = rememberNavController(),
-        onEditClick = {  },
-        onDeleteClick = {  }
+        goToTicket = {},
+        onDeleteClick = {},
+        goBack = {},
+        onComentariosClick = {p1, p2 ->}
     )
 }

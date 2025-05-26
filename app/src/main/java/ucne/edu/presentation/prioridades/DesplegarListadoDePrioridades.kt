@@ -1,8 +1,6 @@
 package ucne.edu.presentation.prioridades
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -10,33 +8,48 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ucne.edu.data.local.entities.PrioridadEntity
 import ucne.edu.presentation.componentes.TopBarGenerica
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DesplegarListadoDePrioridades(
-    listaPrioridades: List<PrioridadEntity>,
-    navController: NavController,
-    onEditClick: (Int?) -> Unit,
+    viewModel: PrioridadesViewModel = hiltViewModel(),
+    goToPrioridad: (Int?) -> Unit,
+    goBack: () -> Unit
+){
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    ListadoPrioridades(
+        uiState = uiState,
+        goBack = goBack,
+        goToTicket = { goToPrioridad(it) },
+        onDeleteClick = { viewModel.onEvent(PrioridadEvent.Delete(it)) },
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ListadoPrioridades(
+    uiState: PrioridadUiState,
+    goToTicket: (Int?) -> Unit,
     onDeleteClick: (PrioridadEntity) -> Unit,
+    goBack: () -> Unit
 ) {
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    onEditClick(0)
+                    goToTicket(0)
                 }
             ) {
                 Icon(Icons.Filled.Add, "Agregar")
@@ -44,8 +57,8 @@ fun DesplegarListadoDePrioridades(
         },
         topBar = {
             TopBarGenerica(
-                navController = navController,
-                titulo = "Listado de Prioridades"
+                titulo = "Listado de Prioridades",
+                goBack = goBack
             )
         }
     ) { innerPadding ->
@@ -56,10 +69,10 @@ fun DesplegarListadoDePrioridades(
                 .padding(8.dp)
                 .padding(innerPadding)
         ) {
-            items(listaPrioridades) { prioridad ->
+            items(uiState.listaPrioridades) { prioridad ->
                 PrioridadCardInfo(
                     prioridad = prioridad,
-                    onEditClick = { onEditClick(prioridad.prioridadId) },
+                    onEditClick = { goToTicket(prioridad.prioridadId) },
                     onDeleteClick = { onDeleteClick(prioridad) },
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -71,25 +84,19 @@ fun DesplegarListadoDePrioridades(
 @Preview(showBackground = true)
 @Composable
 fun Preview() {
-    val nav = rememberNavController()
-    val listaPrioridades = listOf(
-        PrioridadEntity(
-            prioridadId = 1,
-            descripcion = "Descripcion",
-        ),
-        PrioridadEntity(
-            prioridadId = 2,
-            descripcion = "Descripcion",
-        ),
-        PrioridadEntity(
-            prioridadId = 2,
-            descripcion = "Descripcion",
-        )
-    )
-    DesplegarListadoDePrioridades(
-        listaPrioridades = listaPrioridades,
-        navController = nav,
-        onEditClick = {},
+    ListadoPrioridades(
+        uiState = PrioridadUiState(listaPrioridades = listOf(
+            PrioridadEntity(
+                prioridadId = 1,
+                descripcion = "Urgente"
+            ),
+            PrioridadEntity(
+                prioridadId = 2,
+                descripcion = "Alta"
+            ),
+        )),
+        goToTicket = {},
         onDeleteClick = {},
+        goBack = {},
     )
 }
