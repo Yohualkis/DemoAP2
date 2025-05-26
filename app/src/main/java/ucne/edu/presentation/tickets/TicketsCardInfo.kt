@@ -1,5 +1,9 @@
+@file:Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS", "UNCHECKED_CAST")
+
 package ucne.edu.presentation.tickets
 
+//noinspection UsingMaterialAndMaterial3Libraries
+//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -7,8 +11,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.TabRowDefaults.Divider
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Comment
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
@@ -23,27 +30,26 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import ucne.edu.data.local.entities.TicketEntity
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 @Composable
 fun TicketCardInfo(
-    ticketId: Int?,
-    nombreCliente: String,
-    fecha: Date?,
-    asunto: String,
-    descripcion: String,
-    nombreTecnico: String,
-    descripcionPrioridad: String,
+    ticket: TicketEntity,
+    nombreTecnico: String?,
+    descripcionPrioridad: String?,
     onEditClick: (Int?) -> Unit,
     onDeleteClick: () -> Unit,
+    onComentariosClick: (Int?, String) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -62,13 +68,13 @@ fun TicketCardInfo(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    "Ticket #$ticketId",
+                    "Ticket #${ticket.ticketId}",
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
                     color = Color.Black
                 )
                 val dateFormat = remember { SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()) }
-                val fechaFormateada = remember(fecha) { dateFormat.format(fecha) }
+                val fechaFormateada = remember(ticket.fecha) { dateFormat.format(ticket.fecha) }
                 Text(fechaFormateada, fontSize = 14.sp, color = Color.Gray)
             }
 
@@ -84,7 +90,7 @@ fun TicketCardInfo(
                         color = Color.Black
                     )
                     Text(
-                        nombreCliente,
+                        text = ticket.cliente,
                         fontSize = 15.sp,
                         color = Color.Black
                     )
@@ -101,7 +107,7 @@ fun TicketCardInfo(
                         color = Color.Black
                     )
                     Text(
-                        nombreTecnico,
+                        text = nombreTecnico ?: "N/D",
                         fontSize = 15.sp,
                         color = Color.Black
                     )
@@ -118,7 +124,7 @@ fun TicketCardInfo(
                         color = Color.Black
                     )
                     Text(
-                        descripcionPrioridad,
+                        text = descripcionPrioridad ?: "N/D",
                         fontSize = 15.sp,
                         color = Color.Black
                     )
@@ -134,10 +140,39 @@ fun TicketCardInfo(
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Asunto
-            Text("Asunto:", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.Black)
-            Text(asunto, fontSize = 14.sp, color = Color.Black)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
 
+                    // ASUNTO
+                    Text(
+                        text = "Asunto:",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        color = Color.Black
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = ticket.asunto,
+                        fontSize = 14.sp,
+                        color = Color.Black
+                    )
+                }
+                Spacer(modifier = Modifier.weight(1f))
+
+                //COMENTARIOS
+                IconButton(onClick = {
+                    onComentariosClick(ticket.ticketId, ticket.asunto)
+                }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Comment,
+                        contentDescription = "Comment",
+                        tint = Color.Gray
+                    )
+                }
+            }
             Spacer(modifier = Modifier.height(8.dp))
 
             Row {
@@ -150,9 +185,11 @@ fun TicketCardInfo(
                         color = Color.Black
                     )
                     Text(
-                        text = if (expanded || descripcion.length <= 15) descripcion else descripcion.take(
+                        text = (if (expanded || ticket.descripcion.length <= 15)
+                            ticket.descripcion
+                        else ticket.descripcion.take(
                             15
-                        ) + "...",
+                        ) + "...").toString(),
                         fontSize = 14.sp,
                         color = Color.DarkGray
                     )
@@ -171,7 +208,7 @@ fun TicketCardInfo(
                             tint = Color.Gray
                         )
                     }
-                    IconButton(onClick = { onEditClick(ticketId) }) {
+                    IconButton(onClick = { onEditClick(ticket.ticketId) }) {
                         Icon(
                             imageVector = Icons.Default.Edit,
                             contentDescription = "Editar",
@@ -194,16 +231,20 @@ fun TicketCardInfo(
 @Preview(showBackground = true)
 @Composable
 fun Preview() {
-    val fecha = Date()
     TicketCardInfo(
-        ticketId = 1,
-        nombreCliente = "Yohualkis",
-        fecha = fecha,
-        asunto = "Asunto",
-        descripcion = "Descripcionasdasdasdasd",
-        nombreTecnico = "Jerony",
-        descripcionPrioridad = "Urgente",
+        ticket = TicketEntity(
+            ticketId = 1,
+            prioridadId = 1,
+            tecnicoId = 1,
+            fecha = Date(),
+            cliente = "Cliente",
+            asunto = "Asunto",
+            descripcion = "Descripcion"
+        ),
+        nombreTecnico = "Tecnico",
+        descripcionPrioridad = "Prioridad",
         onEditClick = { },
-        onDeleteClick = { }
+        onDeleteClick = { },
+        onComentariosClick = {p1, p2 ->} ,
     )
 }
