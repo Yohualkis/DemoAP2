@@ -162,6 +162,16 @@ fun TicketCardInfo(
                 }
                 Spacer(modifier = Modifier.weight(1f))
 
+                //
+                IconButton(onClick = { expanded = !expanded }) {
+                    @Suppress("DEPRECATION")
+                    Icon(
+                        imageVector = if (expanded) Icons.Default.KeyboardArrowLeft else Icons.Default.KeyboardArrowRight,
+                        contentDescription = if (expanded) "Ver menos" else "Ver más",
+                        tint = Color.Gray
+                    )
+                }
+
                 //COMENTARIOS
                 IconButton(onClick = {
                     onComentariosClick(ticket.ticketId, ticket.asunto)
@@ -200,14 +210,6 @@ fun TicketCardInfo(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    IconButton(onClick = { expanded = !expanded }) {
-                        @Suppress("DEPRECATION")
-                        Icon(
-                            imageVector = if (expanded) Icons.Default.KeyboardArrowLeft else Icons.Default.KeyboardArrowRight,
-                            contentDescription = if (expanded) "Ver menos" else "Ver más",
-                            tint = Color.Gray
-                        )
-                    }
                     IconButton(onClick = { onEditClick(ticket.ticketId) }) {
                         Icon(
                             imageVector = Icons.Default.Edit,
