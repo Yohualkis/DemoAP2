@@ -1,4 +1,4 @@
-package ucne.edu.presentation.generalComposables
+package ucne.edu.presentation.componentes
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,13 +28,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import ucne.edu.presentation.componentes.TopBarHome
-import ucne.edu.presentation.componentes.TotalEntidadesCard
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
+import ucne.edu.presentation.navigation.Screen
 import ucne.edu.presentation.tickets.TicketsViewModel
 
 @Composable
 fun Home(
-    viewModel: TicketsViewModel = hiltViewModel()
+    viewModel: TicketsViewModel = hiltViewModel(),
+    nav: NavHostController
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     Scaffold(
@@ -77,17 +79,29 @@ fun Home(
             TotalEntidadesCard(
                 titulo = "Técnicos:",
                 icono = Icons.Filled.Build,
-                listaEntidades = uiState.listaTecnicos
+                listaEntidades = uiState.listaTecnicos,
+                goToScreen = {
+                    nav.navigate(it)
+                },
+                screen = Screen.TecnicoList
             )
             TotalEntidadesCard(
                 titulo = "Prioridades:",
                 icono = Icons.Filled.PriorityHigh,
-                listaEntidades = uiState.listaPrioridades
+                listaEntidades = uiState.listaPrioridades,
+                goToScreen = {
+                    nav.navigate(it)
+                },
+                screen = Screen.PrioridadesList
             )
             TotalEntidadesCard(
                 titulo = "Tickets:",
                 icono = Icons.Filled.ConfirmationNumber,
-                listaEntidades = uiState.listaTickets
+                listaEntidades = uiState.listaTickets,
+                goToScreen = {
+                    nav.navigate(it)
+                },
+                screen = Screen.TicketsList
             )
         }
     }
@@ -96,5 +110,7 @@ fun Home(
 @Preview(showBackground = true)
 @Composable
 fun PreviewHome() {
-    Home()
+    Home(
+        nav = rememberNavController()
+    )
 }
