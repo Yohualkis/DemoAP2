@@ -1,5 +1,6 @@
 package ucne.edu.presentation.componentes
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -18,17 +19,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import ucne.edu.presentation.navigation.Screen
 
 @Composable
 fun<T> TotalEntidadesCard(
     titulo: String,
     icono: ImageVector,
-    listaEntidades: List<T>
+    listaEntidades: List<T>,
+    goToScreen: (Screen) -> Unit,
+    screen: Screen,
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clickable(onClick = {
+                goToScreen(screen)
+            }),
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Row(
@@ -65,6 +72,8 @@ fun PreviewRow(){
     TotalEntidadesCard(
         "Titulo:",
         Icons.Default.Build,
-        lista
+        lista,
+        {},
+        Screen.TecnicoList
     )
 }
