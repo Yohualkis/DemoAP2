@@ -49,7 +49,7 @@ fun TicketCardInfo(
     descripcionPrioridad: String?,
     onEditClick: (Int?) -> Unit,
     onDeleteClick: () -> Unit,
-    onComentariosClick: (Int?, String) -> Unit
+    onComentariosClick: (Int?, String) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -68,148 +68,58 @@ fun TicketCardInfo(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    "Ticket #${ticket.ticketId}",
-                    fontWeight = FontWeight.Bold,
+                    "Ticket #:${ticket.ticketId}",
+                    fontWeight = FontWeight.Normal,
                     fontSize = 16.sp,
                     color = Color.Black
                 )
-                val dateFormat = remember { SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()) }
+                val dateFormat = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
                 val fechaFormateada = remember(ticket.fecha) { dateFormat.format(ticket.fecha) }
                 Text(fechaFormateada, fontSize = 14.sp, color = Color.Gray)
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
             Row {
-                Column {
-                    // Cliente
-                    Text(
-                        "Cliente:",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color.Black
-                    )
-                    Text(
-                        text = ticket.cliente,
-                        fontSize = 15.sp,
-                        color = Color.Black
-                    )
-                }
-                Spacer(
-                    modifier = Modifier.padding(8.dp)
+                // Cliente
+                Text(
+                    "Cliente: ",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
                 )
-                Column {
-                    // Tecnico
-                    Text(
-                        "Técnico:",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color.Black
-                    )
-                    Text(
-                        text = nombreTecnico ?: "N/D",
-                        fontSize = 15.sp,
-                        color = Color.Black
-                    )
-                }
-                Spacer(
-                    modifier = Modifier.padding(8.dp)
+                Text(
+                    text = ticket.cliente,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
                 )
-                Column {
-                    // Tecnico
-                    Text(
-                        "Prioridad:",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color.Black
-                    )
-                    Text(
-                        text = descripcionPrioridad ?: "N/D",
-                        fontSize = 15.sp,
-                        color = Color.Black
-                    )
-                }
-
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-            Divider(
-                color = Color.LightGray,
-                thickness = 1.dp,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-
-                    // ASUNTO
-                    Text(
-                        text = "Asunto:",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp,
-                        color = Color.Black
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = ticket.asunto,
-                        fontSize = 14.sp,
-                        color = Color.Black
-                    )
-                }
-                Spacer(modifier = Modifier.weight(1f))
-
-                //
-                IconButton(onClick = { expanded = !expanded }) {
-                    @Suppress("DEPRECATION")
-                    Icon(
-                        imageVector = if (expanded) Icons.Default.KeyboardArrowLeft else Icons.Default.KeyboardArrowRight,
-                        contentDescription = if (expanded) "Ver menos" else "Ver más",
-                        tint = Color.Gray
-                    )
-                }
-
-                //COMENTARIOS
-                IconButton(onClick = {
-                    onComentariosClick(ticket.ticketId, ticket.asunto)
-                }) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Comment,
-                        contentDescription = "Comment",
-                        tint = Color.Gray
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-
             Row {
-                Column {
-                    // Descripcion
-                    Text(
-                        "Descripción:",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp,
-                        color = Color.Black
-                    )
-                    Text(
-                        text = (if (expanded || ticket.descripcion.length <= 15)
-                            ticket.descripcion
-                        else ticket.descripcion.take(
-                            15
-                        ) + "...").toString(),
-                        fontSize = 14.sp,
-                        color = Color.DarkGray
-                    )
-                }
+                // ASUNTO
+                Text(
+                    text = "Asunto:",
+                    fontSize = 15.sp,
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = ticket.asunto,
+                    fontSize = 14.sp,
+                )
 
                 // Botones
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
+                    //COMENTARIOS
+                    IconButton(onClick = {
+                        onComentariosClick(ticket.ticketId, ticket.asunto)
+                    }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Comment,
+                            contentDescription = "Comment",
+                            tint = Color.Gray
+                        )
+                    }
+
                     IconButton(onClick = { onEditClick(ticket.ticketId) }) {
                         Icon(
                             imageVector = Icons.Default.Edit,
@@ -226,6 +136,13 @@ fun TicketCardInfo(
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            Divider(
+                color = Color.LightGray,
+                thickness = 1.dp,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
@@ -247,6 +164,6 @@ fun Preview() {
         descripcionPrioridad = "Prioridad",
         onEditClick = { },
         onDeleteClick = { },
-        onComentariosClick = {p1, p2 ->} ,
+        onComentariosClick = { p1, p2 -> },
     )
 }
