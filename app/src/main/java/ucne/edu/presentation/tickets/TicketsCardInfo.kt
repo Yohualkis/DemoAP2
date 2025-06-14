@@ -4,6 +4,7 @@ package ucne.edu.presentation.tickets
 
 //noinspection UsingMaterialAndMaterial3Libraries
 //noinspection UsingMaterialAndMaterial3Libraries
+//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,19 +19,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Comment
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -45,14 +40,10 @@ import java.util.Locale
 @Composable
 fun TicketCardInfo(
     ticket: TicketEntity,
-    nombreTecnico: String?,
-    descripcionPrioridad: String?,
     onEditClick: (Int?) -> Unit,
     onDeleteClick: () -> Unit,
     onComentariosClick: (Int?, String) -> Unit,
 ) {
-    var expanded by remember { mutableStateOf(false) }
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -160,8 +151,6 @@ fun Preview() {
             asunto = "Asunto",
             descripcion = "Descripcion"
         ),
-        nombreTecnico = "Tecnico",
-        descripcionPrioridad = "Prioridad",
         onEditClick = { },
         onDeleteClick = { },
         onComentariosClick = { p1, p2 -> },
