@@ -5,6 +5,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import ucne.edu.presentation.clientes.ClientesListScreen
+import ucne.edu.presentation.clientes.ClientesScreen
 import ucne.edu.presentation.componentes.Home
 import ucne.edu.presentation.mensajes.TicketComentariosScreen
 import ucne.edu.presentation.prioridades.DesplegarListadoDePrioridades
@@ -25,6 +27,19 @@ fun GeneralNavHost(
 
         composable<Screen.Home> {
             Home(nav = navHostController)
+        }
+        // CLIENTES
+        composable<Screen.ClientesList> {
+            ClientesListScreen(
+                goBack = { navHostController.navigateUp() },
+                nuevoCliente = { navHostController.navigate(Screen.Cliente) }
+            )
+        }
+
+        composable<Screen.Cliente> {
+            ClientesScreen(
+                goBack = { navHostController.navigateUp() }
+            )
         }
 
         // MENSAJES

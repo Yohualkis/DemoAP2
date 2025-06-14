@@ -12,6 +12,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.ConfirmationNumber
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.PriorityHigh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -30,15 +31,18 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import ucne.edu.presentation.clientes.ClientesViewModel
 import ucne.edu.presentation.navigation.Screen
 import ucne.edu.presentation.tickets.TicketsViewModel
 
 @Composable
 fun Home(
-    viewModel: TicketsViewModel = hiltViewModel(),
+    ticketsViewModel: TicketsViewModel = hiltViewModel(),
+    clienteViewModel: ClientesViewModel = hiltViewModel(),
     nav: NavHostController
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val uiStateTickets by ticketsViewModel.uiState.collectAsStateWithLifecycle()
+    val uiStateClientes by clienteViewModel.uiState.collectAsStateWithLifecycle()
     Scaffold(
         topBar = { TopBarHome() }
     ) { innerPadding ->
@@ -79,7 +83,7 @@ fun Home(
             TotalEntidadesCard(
                 titulo = "Técnicos:",
                 icono = Icons.Filled.Build,
-                listaEntidades = uiState.listaTecnicos,
+                listaEntidades = uiStateTickets.listaTecnicos,
                 goToScreen = {
                     nav.navigate(it)
                 },
@@ -88,7 +92,7 @@ fun Home(
             TotalEntidadesCard(
                 titulo = "Prioridades:",
                 icono = Icons.Filled.PriorityHigh,
-                listaEntidades = uiState.listaPrioridades,
+                listaEntidades = uiStateTickets.listaPrioridades,
                 goToScreen = {
                     nav.navigate(it)
                 },
@@ -97,11 +101,20 @@ fun Home(
             TotalEntidadesCard(
                 titulo = "Tickets:",
                 icono = Icons.Filled.ConfirmationNumber,
-                listaEntidades = uiState.listaTickets,
+                listaEntidades = uiStateTickets.listaTickets,
                 goToScreen = {
                     nav.navigate(it)
                 },
                 screen = Screen.TicketsList
+            )
+            TotalEntidadesCard(
+                titulo = "Clientes:",
+                icono = Icons.Filled.Groups,
+                listaEntidades = uiStateClientes.listaClientesDto,
+                goToScreen = {
+                    nav.navigate(it)
+                },
+                screen = Screen.ClientesList
             )
         }
     }

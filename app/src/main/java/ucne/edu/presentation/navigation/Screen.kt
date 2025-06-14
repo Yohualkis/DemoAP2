@@ -26,4 +26,10 @@ sealed class Screen {
 
     @Serializable
     data class  Mensaje (val ticketId: Int?, val ticketAsunto: String) : Screen()
+
+    @Serializable
+    data object ClientesList: Screen()
+
+    @Serializable
+    data object Cliente: Screen()
 }
